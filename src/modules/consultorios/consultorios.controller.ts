@@ -22,9 +22,11 @@ export namespace ConsultoriosController {
     }
 
     export const Catalogo = async (req: Request, res: Response) => {
+        const busqueda: string = req.query.busqueda as string ?? undefined;
+
         try {
             const service = new ConsultoriosService();
-            const response = await service.Catalogo();
+            const response = await service.Catalogo(busqueda);
 
             return HandleControllerError(response, res);
         } catch (e) {

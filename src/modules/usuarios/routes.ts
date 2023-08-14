@@ -5,7 +5,7 @@ import { CommonMiddlewares } from "../../common/middlewares";
 
 const ChildrenRoutes = Router({mergeParams: true});
 
-ChildrenRoutes.get('/catalogo', UsuariosController.ListadoUsuarios);
+ChildrenRoutes.get('/catalogo', UsuariosController.Catalogo);
 ChildrenRoutes.get('/info/:id', UsuariosController.ObtenerInfo);
 
 

@@ -38,9 +38,11 @@ export default class ConsultoriosService {
         });
     }
 
-    async Catalogo() {
+    async Catalogo(busqueda?: string) {
         return new Promise(async (resolve: (data: IResolveResponse<Array<IConsultorio>>) => void, reject: (reason: IRejectResponse) => void) => {
-            ConsultoriosModel.find({}).then((catalogo) => {
+            ConsultoriosModel.find({
+                ...(busqueda && {nombre: {$regex: busqueda.toUpperCase()}})
+            }).then((catalogo) => {
                 resolve({
                     isError: false,
                     statusCode: 200,

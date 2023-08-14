@@ -22,9 +22,11 @@ export namespace EspecialidadesController {
     }
 
     export const Catalogo = async (req: Request, res: Response) => {
+        const busqueda: string = req.query.busqueda as string ?? undefined;
+
         try {
             const service = new EspecialidadesService();
-            const response = await service.Catalogo();
+            const response = await service.Catalogo(busqueda);
 
             return HandleControllerResponse(response, res);
         } catch (e) {

@@ -1,8 +1,21 @@
 import { Document, model, Schema } from "mongoose";
 
+import { IPersona } from "./personas.model";
+import { IRol } from "./roles.model";
+
 export interface IUsuario extends Document {
     persona: Schema.Types.ObjectId,
     rol: Schema.Types.ObjectId,
+    email: string,
+    password: string,
+    codigo: string | null,
+    expiracionCodigo: Date | null,
+    activo: boolean,
+}
+
+export interface IUsuarioPopulated extends Document {
+    persona: IPersona,
+    rol: IRol,
     email: string,
     password: string,
     codigo: string | null,

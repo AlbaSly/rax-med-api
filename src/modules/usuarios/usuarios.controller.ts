@@ -4,12 +4,14 @@ import { HandleControllerError, HandleControllerResponse, HandleControllerValida
 import { MongoTypesValidator, UUIDValidator } from "../../common/validators";
 
 export namespace UsuariosController {
-    export const ListadoUsuarios = async (req: Request, res: Response) => {
+    export const Catalogo = async (req: Request, res: Response) => {
+        const busqueda: string = req.query.busqueda as string ?? undefined;
+
         try {
             const service = new UsuariosService();
-            const response = await service.ListadoUsuarios();
+            const response = await service.Catalogo(busqueda);
 
-            return HandleControllerResponse(response, res);
+            return HandleControllerError(response, res);
         } catch (e) {
             return HandleControllerError(e, res);
         }

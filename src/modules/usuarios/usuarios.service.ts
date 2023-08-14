@@ -1,13 +1,16 @@
+import { SearchByIlikeFunctionPersonas } from "../../common/handlers";
 import { IRejectResponse, IResolveResponse } from "../../common/interfaces";
 import { api } from "../../common/utils";
-import { IMedico, IPaciente, IUsuario, MedicosModel, PacientesModel, UsuariosModel } from "../../models";
+import { IMedico, IPaciente, IUsuario, IUsuarioPopulated, MedicosModel, PacientesModel, UsuariosModel } from "../../models";
 
 export default class UsuariosService {
     constructor() {}
 
-    async ListadoUsuarios() {
-        return new Promise(async (resolve: (data: IResolveResponse<Array<IUsuario>>) => void, reject: (reason: IRejectResponse) => void) => {
-            UsuariosModel.find({}).populate('persona').populate('rol').then((catalogo) => {
+    async Catalogo(busqueda?: string) {
+        return new Promise(async (resolve: (data: IResolveResponse<Array<IUsuarioPopulated>>) => void, reject: (reason: IRejectResponse) => void) => {
+            UsuariosModel.find().populate("rol").populate("persona").then((catalogo: any) => {
+                catalogo = SearchByIlikeFunctionPersonas(catalogo, busqueda ?? "");
+
                 resolve({
                     isError: false,
                     statusCode: 200,
@@ -18,7 +21,7 @@ export default class UsuariosService {
                 reject({
                     isError: true,
                     statusCode: 500,
-                    msg: "Hubo un error al consultar el catálogo de usuarios",
+                    msg: "Hubo un error al consultar el catálogo de usuarios"
                 });
             });
         });
@@ -43,7 +46,7 @@ export default class UsuariosService {
                 }
 
                 resolve({
-                    isError: true,
+                    isError: false,
                     statusCode: 200,
                     msg: "Información consultada",
                     data: info

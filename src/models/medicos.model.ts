@@ -1,7 +1,15 @@
 import { Schema, model, Document } from "mongoose";
+import { IUsuarioPopulated } from "./usuarios.model";
 
 export interface IMedico extends Document {
     usuario: Schema.Types.ObjectId;
+    horaEntrada: Date;
+    horaSalida: Date;
+    activo: boolean;
+}
+
+export interface IMedicoPopulated extends Document {
+    usuario: IUsuarioPopulated;
     horaEntrada: Date;
     horaSalida: Date;
     activo: boolean;

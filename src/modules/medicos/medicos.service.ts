@@ -1,7 +1,9 @@
+import { SearchByIlikeFunction } from "../../common/handlers";
 import { IRejectResponse, IResolveResponse } from "../../common/interfaces";
-import { api } from "../../common/utils";
-import { EspecialidadesModel, IMedico, MedicosEspecialidadesModel, MedicosModel, PersonasModel, UsuariosModel } from "../../models";
+import { TransformStringToDateTime, api } from "../../common/utils";
+import { EspecialidadesModel, IEspecialidad, IMedico, IMedicoEspecialidad, IMedicoPopulated, MedicosEspecialidadesModel, MedicosModel, PersonasModel, UsuariosModel } from "../../models";
 import { ConsultoriosModel } from "../../models/consultorios.model";
+import { IAgregarEspecialidad, IEditarMedico } from "./validators";
 
 export default class MedicosService {
 
@@ -50,8 +52,78 @@ export default class MedicosService {
             });
         });
     }
+    
+    async ObtenerInfo(idMedico: string) {
+        return new Promise(async (resolve: (data: IResolveResponse<IMedicoPopulated>) => void, reject: (reason: IRejectResponse) => void) => {
+            MedicosModel.findOne({_id: idMedico}).populate({
+                path: "usuario",
+                populate: {
+                    path: "persona",
+                    model: "personas"
+                }
+            }).then((medicoFound) => {
+                if (!medicoFound) return reject({
+                    isError: true,
+                    statusCode: 404,
+                    msg: "Médico no encontrado"
+                });
 
-    async AgregarEspecialidad(idMedico: string, idEspecialidad: string, idConsultorio: string, cedula: string) {
+                resolve({
+                    isError: false,
+                    statusCode: 200,
+                    msg: "Información consultada",
+                    data: medicoFound as unknown as IMedicoPopulated
+                })
+            }).catch(e => {
+                reject({
+                    isError: true,
+                    statusCode: 500,
+                    msg: "Hubo un error al consultar el catálogo de médicos"
+                });
+            })
+        });
+    }
+    
+    async Editar(idMedico: string, data: IEditarMedico) {
+        return new Promise(async (resolve: (data: IResolveResponse<null>) => void, reject: (reason: IRejectResponse) => void) => {
+            MedicosModel.findById(idMedico).then((medicoFound) => {
+                if (!medicoFound) return reject({
+                    isError: true,
+                    statusCode: 404,
+                    msg: "Médico no encontrado"
+                });
+
+                Object.assign(medicoFound, {
+                    ...data,
+                    horaEntrada: TransformStringToDateTime(data.horaEntrada),
+                    horaSalida: TransformStringToDateTime(data.horaSalida),
+                });
+
+                medicoFound.save().then((medicoSaved) => {
+                    resolve({
+                        isError: false,
+                        statusCode: 200,
+                        msg: "Datos actualizados correctamente",
+                        data: null
+                    });
+                }).catch(e => {
+                    reject({
+                        isError: true,
+                        statusCode: 500,
+                        msg: "Hubo un error al actualizar los datos del médico"
+                    });
+                });
+            }).catch(e => {
+                reject({
+                    isError: true,
+                    statusCode: 500,
+                    msg: "Hubo un error al consultar el catálogo de médicos"
+                });
+            });
+        });
+    }
+
+    async AgregarEspecialidad(idMedico: string, idEspecialidad: string, idConsultorio: string, data: IAgregarEspecialidad) {
         return new Promise(async (resolve: (data: IResolveResponse<null>) => void, reject: (reason: IRejectResponse) => void) => {
             MedicosModel.findById(idMedico).then((medicoFound) => {
                 if (!medicoFound) return reject({
@@ -74,18 +146,31 @@ export default class MedicosService {
                             msg: "Consultorio no encontrado"
                         });
 
-                        MedicosEspecialidadesModel.findOne({medico: idMedico, especialidad: idEspecialidad}).then((medEspFound) => {
-                            if (medEspFound) return reject({
-                                isError: true,
-                                statusCode: 401,
-                                msg: "Asignación existente"
-                            });
-    
+                        MedicosEspecialidadesModel.findOne({medico: idMedico, especialidad: idEspecialidad}).then(async (medEspFound) => {
+                            if (medEspFound) {
+                                if (medEspFound.activo) return reject({
+                                    isError: true,
+                                    statusCode: 401,
+                                    msg: "Especialidad ya asignada al médico"
+                                });
+
+                                medEspFound.activo = true;
+
+                                await medEspFound.save();
+
+                                return resolve({
+                                    isError: false,
+                                    statusCode: 201,
+                                    msg: "Asignación creada correctamente",
+                                    data: null,
+                                });
+                            }
+
                             MedicosEspecialidadesModel.create({
                                 medico: idMedico,
                                 especialidad: idEspecialidad,
                                 consultorio: idConsultorio,
-                                cedula
+                                ...data
                             }).then((medEspCreated) => {
                                 resolve({
                                     isError: false,
@@ -99,6 +184,12 @@ export default class MedicosService {
                                     statusCode: 500,
                                     msg: "Hubo un error al crear la asignación"
                                 });
+                            });
+                        }).catch(e => {
+                            reject({
+                                isError: true,
+                                statusCode: 500,
+                                msg: "Hubo un error al consultar las especialidades del médico"
                             });
                         });
                     }).catch( e => {
@@ -122,6 +213,68 @@ export default class MedicosService {
                     msg: "Hubo un error al consultar el catálogo de médicos"
                 });
             })
+        });
+    }
+
+    async ListadoEspecialidades(idMedico: string) {
+        return new Promise(async (resolve: (data: IResolveResponse<Array<IMedicoEspecialidad>>) => void, reject: (reason: IRejectResponse) => void) => {
+            MedicosModel.findById(idMedico).then((medicoFound) => {
+                if (!medicoFound) return reject({
+                    isError: true,
+                    statusCode: 404,
+                    msg: "Médico no encontrado"
+                });
+
+                MedicosEspecialidadesModel.find({medico: idMedico}).populate('especialidad').then((catalogo) => {
+                    resolve({
+                        isError: false,
+                        statusCode: 200,
+                        msg: "Especialidades del médico",
+                        data: catalogo
+                    });
+                }).catch(e => {
+                    reject({
+                        isError: true,
+                        statusCode: 500,
+                        msg: "Hubo un error al consultar las especialidades del médico"
+                    });
+                });
+            }).catch(e => {
+                reject({
+                    isError: true,
+                    statusCode: 500,
+                    msg: "Hubo un error al consultar el catálogo de médicos"
+                });
+            });
+        });
+    }
+
+    async Catalogo(busqueda?: string) {
+        return new Promise(async (resolve: (data: IResolveResponse<Array<IMedicoPopulated>>) => void, reject: (reason: IRejectResponse) => void) => {
+            MedicosModel.find().populate({
+                path: "usuario",
+                populate: {
+                    path: "persona",
+                    model: "personas"
+                }
+            }).then((catalogo: any) => {
+                catalogo = catalogo as Array<IMedicoPopulated>;
+                catalogo = SearchByIlikeFunction(catalogo, busqueda ?? "");
+                
+                resolve({
+                    isError: false,
+                    statusCode: 200,
+                    msg: "Catálogo de médicos",
+                    data: catalogo
+                });
+            }).catch(e => {
+                console.log(e);
+                reject({
+                    isError: true,
+                    statusCode: 500,
+                    msg: "Hubo un error al consultar el catálogo de médicos"
+                });
+            });
         });
     }
 }

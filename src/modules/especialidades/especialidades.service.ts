@@ -38,9 +38,11 @@ export default class EspecialidadesService {
         });
     }
 
-    async Catalogo() {
+    async Catalogo(busqueda?: string) {
         return new Promise(async (resolve: (data: IResolveResponse<Array<IEspecialidad>>) => void, reject: (reason: IRejectResponse) => void) => {
-            EspecialidadesModel.find({}).then((catalogo) => {
+            EspecialidadesModel.find({
+                ...(busqueda && {nombre: {$regex: busqueda.toUpperCase()}})
+            }).then((catalogo) => {
                 resolve({
                     isError: false,
                     statusCode: 200,

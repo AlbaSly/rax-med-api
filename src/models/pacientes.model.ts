@@ -1,8 +1,14 @@
 import { Schema, model, Document } from "mongoose";
+import { IUsuarioPopulated } from "./usuarios.model";
 
 export interface IPaciente extends Document {
     usuario: Schema.Types.ObjectId,
     activo: boolean,
+}
+
+export interface IPacientePopulated extends Document {
+    usuario: IUsuarioPopulated;
+    activo: boolean;
 }
 
 const schema = new Schema<IPaciente>({

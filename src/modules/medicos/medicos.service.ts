@@ -148,13 +148,20 @@ export default class MedicosService {
 
                         MedicosEspecialidadesModel.findOne({medico: idMedico, especialidad: idEspecialidad}).then(async (medEspFound) => {
                             if (medEspFound) {
-                                if (medEspFound.activo) return reject({
-                                    isError: true,
-                                    statusCode: 401,
-                                    msg: "Especialidad ya asignada al médico"
-                                });
+                                if ((medEspFound as any).consultorio.toString() !== idConsultorio) {
+                                    ((medEspFound.consultorio) as any) = idConsultorio;
+                                    await medEspFound.save();
+
+                                    return resolve({
+                                        isError: false,
+                                        statusCode: 200,
+                                        msg: "Consultorio reasignado correctamente",
+                                        data: null,
+                                    });
+                                }
 
                                 medEspFound.activo = true;
+                                medEspFound.cedula = data.cedula;
 
                                 await medEspFound.save();
 
@@ -216,6 +223,43 @@ export default class MedicosService {
         });
     }
 
+    async ModificarEstadoEspecialidad(idMedicoEspecialidad: string) {
+        return new Promise(async (resolve: (data: IResolveResponse<null>) => void, reject: (reason: IRejectResponse) => void) => {
+            MedicosEspecialidadesModel.findById(idMedicoEspecialidad).then((medEspFound) => {
+                if (!medEspFound) return reject({
+                    isError: true,
+                    statusCode: 404,
+                    msg: "No encontrado"
+                });
+
+                let msg: string = medEspFound.activo ? "La especialidad del médico se desactivó" : "La especialidad del médico se volvió a activar";
+
+                medEspFound.activo = !medEspFound.activo;
+
+                medEspFound.save().then((medEspSaved) => {
+                    resolve({
+                        isError: false,
+                        statusCode: 200,
+                        msg,
+                        data: null,
+                    });
+                }).catch(e => {
+                    reject({
+                        isError: true,
+                        statusCode: 500,
+                        msg: "Hubo un error al cambiar el estado de la especialidad del médico"
+                    });
+                });
+            }).catch(e => {
+                reject({
+                    isError: true,
+                    statusCode: 500,
+                    msg: "Hubo un error al consultar las especialidades del médico",
+                });
+            });
+        });
+    }
+
     async ListadoEspecialidades(idMedico: string) {
         return new Promise(async (resolve: (data: IResolveResponse<Array<IMedicoEspecialidad>>) => void, reject: (reason: IRejectResponse) => void) => {
             MedicosModel.findById(idMedico).then((medicoFound) => {
@@ -225,7 +269,7 @@ export default class MedicosService {
                     msg: "Médico no encontrado"
                 });
 
-                MedicosEspecialidadesModel.find({medico: idMedico}).populate('especialidad').then((catalogo) => {
+                MedicosEspecialidadesModel.find({medico: idMedico}).populate('especialidad').populate('consultorio').then((catalogo) => {
                     resolve({
                         isError: false,
                         statusCode: 200,

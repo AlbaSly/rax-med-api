@@ -18,7 +18,7 @@ export default class MedicosValidator {
 
     AgregarEspecialidad(): joi.ValidationResult<IAgregarEspecialidad> {
         let schema = joi.object<IAgregarEspecialidad>({
-            cedula: joi.string().trim().uppercase().min(13).max(14).required()
+            cedula: joi.string().trim().uppercase().min(10).max(10).required()
         });
 
         return schema.validate(this.input);

@@ -79,6 +79,21 @@ export namespace MedicosController {
         }
     }
 
+    export const ModificarEstadoEspecialidad = async (req: Request, res: Response) => {
+        const id = req.params.id;
+
+        if (!MongoTypesValidator.isValid(id)) return HandleControllerValidationError(null, res, MongoTypesValidator.INCORRECT_MONGO_ID);
+
+        try {
+            const service = new MedicosService();
+            const response = await service.ModificarEstadoEspecialidad(id);
+
+            return HandleControllerError(response, res);
+        } catch (e) {
+            return HandleControllerError(e, res);
+        }
+    }
+
     export const ListadoEspecialidades = async (req: Request, res: Response) => {
         const id = req.params.id;
 

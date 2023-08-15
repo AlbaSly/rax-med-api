@@ -9,6 +9,7 @@ ChildrenRoutes.post('/crear/:id', MedicosController.CrearMedico);
 ChildrenRoutes.get('/info/:id', MedicosController.ObtenerInfo);
 ChildrenRoutes.patch('/editar/:id', MedicosController.Editar);
 ChildrenRoutes.post('/agregar-especialidad/:idMedico/:idEspecialidad/:idConsultorio', MedicosController.AgregarEspecialidad);
+ChildrenRoutes.put('/modificar-estado-especialidad/:id', MedicosController.ModificarEstadoEspecialidad);
 ChildrenRoutes.get('/listado-especialidades/:id', MedicosController.ListadoEspecialidades);
 ChildrenRoutes.get('/catalogo', MedicosController.Catalogo);
 
